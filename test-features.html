@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>特徴量検証ハーネス（開発用）</title>
+  <style>
+    /* 開発専用ページのため最小限のスタイルのみ（本番UIとは独立） */
+    body { font-family: sans-serif; margin: 16px; line-height: 1.5; }
+    h1 { font-size: 1.2rem; }
+    h2 { font-size: 1rem; margin-top: 24px; }
+    table { border-collapse: collapse; font-size: 0.85rem; width: 100%; }
+    th, td { border: 1px solid #999; padding: 4px 8px; text-align: left; }
+    th { background: #eee; }
+    .row-pass { background: #e6f7e6; }
+    .row-fail { background: #fde8e8; }
+    .summary-pass { color: #1a7f1a; font-weight: bold; }
+    .summary-fail { color: #c00; font-weight: bold; }
+    .table-wrapper { overflow-x: auto; }
+  </style>
+</head>
+<body>
+  <h1>特徴量検証ハーネス（開発用ページ）</h1>
+  <p>Phase 1 スパイク: 合成音で特徴量計算の正しさを確認し、実サンプルで判別可能性を確認する。</p>
+
+  <h2>1. 合成音テスト（期待値 vs 実測）</h2>
+  <button id="run-synthetic-tests" type="button">合成音テストを実行</button>
+  <p id="synthetic-summary"></p>
+  <div class="table-wrapper">
+    <table id="synthetic-results">
+      <thead>
+        <tr>
+          <th>信号</th><th>期待値</th><th>全長(s)</th><th>区間数</th><th>ピッチ</th>
+          <th>ノイズ割合</th><th>重心</th><th>ピッチ変化</th>
+          <th>主区間長(s)</th><th>立ち上がり(s)</th><th>平均間隔(s)</th><th>判定</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <h2>2. ループバック録音テスト（録音チェーンの検証）</h2>
+  <p>440Hz発振器をマイクの代わりに録音経路へ流し、PCMバッファリングの正しさを検証する。</p>
+  <button id="run-loopback-test" type="button">ループバックテストを実行</button>
+  <p id="loopback-result"></p>
+
+  <h2>3. スペクトログラム描画テスト（ピクセル検証）</h2>
+  <p>合成スペクトルをレンダラーに注入し、輝点位置・スクロール・停止をピクセル単位で機械判定する。</p>
+  <button id="run-spectrogram-tests" type="button">描画テストを実行</button>
+  <p id="spectrogram-summary"></p>
+  <ul id="spectrogram-results"></ul>
+
+  <h2>4. 棄却クラスの自動アサート</h2>
+  <p>犬の鳴き声でない音に対して、6感情のどれかを断定せず「判定できません」を返すことを検証する。</p>
+  <button id="run-rejection-tests" type="button">棄却テストを実行</button>
+  <p id="rejection-summary"></p>
+  <ul id="rejection-results"></ul>
+
+  <h2>5. ピッチ推定の境界安定性テスト</h2>
+  <p>唸り声サンプルの切り出し境界を±0.15秒動かし、ピッチ推定がオクターブ誤りで飛ばないことを検証する。</p>
+  <button id="run-boundary-test" type="button">境界安定性テストを実行</button>
+  <p id="boundary-result"></p>
+
+  <h2>6. 実サンプル解析・感情分類（test-samples/ または ファイル選択）</h2>
+  <p>
+    <button id="load-manifest-button" type="button">test-samples/manifest.json から読み込み</button>
+    または <input id="sample-file-input" type="file" accept="audio/*" multiple>
+  </p>
+  <p id="sample-status"></p>
+  <p id="accuracy-summary"></p>
+  <div class="table-wrapper">
+    <table id="sample-results">
+      <thead>
+        <tr>
+          <th>ファイル</th><th>全長(s)</th><th>区間数</th><th>ピッチ</th>
+          <th>ノイズ割合</th><th>重心</th><th>ピッチ変化</th>
+          <th>主区間長(s)</th><th>立ち上がり(s)</th><th>平均間隔(s)</th>
+          <th>分類結果</th><th>期待ラベル</th><th>判定</th><th>理由</th><th>回帰</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <script type="module" src="js/test-features.js"></script>
+</body>
+</html>

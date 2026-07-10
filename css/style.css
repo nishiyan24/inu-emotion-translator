@@ -1,0 +1,1004 @@
+:root {
+  /* d/back.jpg からピクセル実測(rgb(254,248,248)) */
+  --color-bg: #fef8f8;
+  --color-surface: #fffcf8;
+  --color-surface-soft: #fef6ee;
+  --color-surface-hover: #fdeee0;
+  --color-text: #2d1a12;
+  --color-text-secondary: #7a6354;
+  --color-muted: #a89484;
+  --color-accent: #fc5c0f;
+  --color-accent-soft: #fd8b0f;
+  --color-on-accent: #fffaf5;
+  --color-border: #f0e2d0;
+  --color-border-strong: #e8d3b8;
+  --color-success: #4caf50;
+  --radius-card: 20px;
+  --radius-button: 14px;
+  --radius-pill: 999px;
+  --shadow-card: 0 1px 2px rgba(45, 26, 18, 0.05), 0 6px 16px rgba(45, 26, 18, 0.05);
+}
+
+/* ===== 夜モード(ダークネイビー+シアン) =====
+   カードの形(角丸)・レイアウト・機能は昼モードと完全に同じにし、
+   :root の色トークンだけ上書きする。ほぼ全コンポーネントが var(--color-*) で
+   書かれているため、この上書きだけで大部分が自動的に配色される */
+:root[data-theme="dark"] {
+  --color-bg: #0a0e1a;
+  --color-surface: #10182a;
+  --color-surface-soft: #16213a;
+  --color-surface-hover: #1c2942;
+  --color-text: #eaf2ff;
+  --color-text-secondary: #93a3c2;
+  --color-muted: #5f6f8f;
+  --color-accent: #22d3ee;
+  --color-accent-soft: #5eead4;
+  /* シアンは明るい色のため、塗りボタン上の文字は白ではなく濃色にする */
+  --color-on-accent: #04222b;
+  --color-border: #2a4a63;
+  --color-border-strong: #3a6488;
+  --color-success: #4ade80;
+  /* カードの縁を光らせ、ホログラムのような浮遊感を出す:
+     細い縁取り + 広がるシアンのぼかし + 沈み込ませる暗い影、の3層構成 */
+  --shadow-card: 0 0 0 1px rgba(34, 211, 238, 0.18), 0 0 28px rgba(34, 211, 238, 0.18), 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text);
+  line-height: 1.6;
+}
+
+.app {
+  /* 3カラムダッシュボード(中央のスペクトログラムを大きく見せる)を収めるため、
+     単一カラム時代の840pxより広く取る */
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 16px;
+  /* iPhone のノッチ・ホームバーにコンテンツが隠れないよう安全領域ぶん余白を足す */
+  padding-left: max(16px, env(safe-area-inset-left));
+  padding-right: max(16px, env(safe-area-inset-right));
+}
+
+a {
+  color: var(--color-accent);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* ===== カード（角丸パネル） =====
+   .panel は間隔調整のための素通しラッパー、実際の見た目（背景・枠・角丸・影）は
+   .panel-body が担う。1枚のカードに見えるが、リデザイン時に中身だけ差し替えられるよう
+   構造は2階層のまま維持している */
+.panel {
+  margin-bottom: 16px;
+}
+
+.panel-body {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  padding: 20px 24px;
+}
+
+@media (max-width: 480px) {
+  .panel-body {
+    padding: 16px 18px;
+  }
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  /* 見出し+アイコン+付随テキスト(タグライン等)が1行に収まりきらない時、
+     text nodeを無理に圧縮させず素直に折り返す */
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin: 0 0 12px;
+  color: var(--color-text);
+}
+
+.section-title .icon {
+  color: var(--color-accent);
+  flex-shrink: 0;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.section-header .section-title {
+  margin: 0;
+}
+
+/* ===== アイコン ===== */
+.icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+/* ===== ヘッダー ===== */
+/* タイトル・使い方ボタン・プライバシーバッジを1行に並べ、説明文はその下に続ける */
+.app-title-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+@media (max-width: 480px) {
+  /* スマホ幅ではタイトル行に収まりきらず折り返すため、見た目の並びだけ
+     「プライバシーバッジ→使い方→モード」に入れ替える(DOM順・ブラウザ版の並びは変えない)。
+     バッジの後ろに幅0・flex-basis:100%の疑似要素を挟むことで改行だけを起こす
+     (バッジ自体に flex-basis:100% を付けるとバッジ自体が全幅に伸びてしまうため) */
+  .privacy-badge {
+    order: 1;
+  }
+  .app-title-row::before {
+    content: "";
+    order: 2;
+    flex-basis: 100%;
+    height: 0;
+  }
+  .nav-button {
+    order: 3;
+  }
+  .mode-menu {
+    order: 4;
+  }
+}
+
+.app-header-text h1 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--color-text);
+}
+
+.app-title-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--color-accent-soft), var(--color-accent));
+  color: var(--color-on-accent);
+  flex-shrink: 0;
+}
+
+.app-title-icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.app-description {
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+  margin: 0;
+  /* ch は半角基準の単位で、日本語の全角文字は実際その約2倍の幅を取るため、
+     ch指定の max-width は体感よりずっと狭くなり不自然な位置で折り返されやすい。
+     全体は .app の max-width(840px)で十分に制限されているため指定しない */
+}
+
+.nav-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--color-surface-soft);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  padding: 8px 16px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--color-text);
+  cursor: pointer;
+  white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.nav-button .icon {
+  color: var(--color-accent);
+}
+
+.nav-button:hover {
+  background: var(--color-surface-hover);
+}
+
+/* ===== モード切替(昼/夜)メニュー ===== */
+.mode-menu {
+  position: relative;
+}
+
+.mode-popup {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 140px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  box-shadow: var(--shadow-card);
+  padding: 6px;
+}
+
+/* [hidden] は display:flex と同じ特異度のため、明示的に上書きしないと隠れない */
+.mode-popup[hidden] {
+  display: none;
+}
+
+.mode-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--color-text);
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mode-option .icon {
+  color: var(--color-accent);
+}
+
+.mode-option:hover {
+  background: var(--color-surface-hover);
+}
+
+.mode-option[aria-current="true"] {
+  background: var(--color-surface-soft);
+}
+
+.privacy-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--color-surface-soft);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  padding: 8px 16px;
+  white-space: nowrap;
+  color: var(--color-accent);
+}
+
+.privacy-badge .icon {
+  color: var(--color-accent);
+}
+
+.privacy-badge-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.3;
+}
+
+.privacy-badge-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.privacy-badge-subtitle {
+  font-size: 0.7rem;
+  color: var(--color-text-secondary);
+}
+
+/* ===== 使い方（入口2択 + 共通の3ステップ、の2段構成） ===== */
+.how-to-tagline {
+  font-size: 0.78rem;
+  font-weight: 400;
+  color: var(--color-text-secondary);
+  margin-left: 4px;
+}
+
+/* 見出し内(span)ではなく手順の下に単独で置く用途。左マージンは不要で、代わりに上の余白を持つ */
+.how-to-tagline--footer {
+  margin: 14px 0 0;
+}
+
+@media (max-width: 480px) {
+  /* 見出し「使い方」とタグラインが1行に収まらない幅では、
+     詰め込まず素直にタグラインだけ次の行へ落とす */
+  .how-to-tagline {
+    flex-basis: 100%;
+    margin-left: 0;
+  }
+}
+
+.how-to-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 6px;
+}
+
+.how-to-row--start {
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px dashed var(--color-border);
+}
+
+.how-to-step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-text-secondary);
+}
+
+.how-to-step .icon {
+  color: var(--color-accent-soft);
+}
+
+.how-to-step-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  font-size: 0.75rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.how-to-step-label {
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.how-to-or {
+  font-size: 0.78rem;
+  color: var(--color-muted);
+}
+
+.how-to-chevron {
+  color: var(--color-border-strong);
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+@media (max-width: 640px) {
+  .how-to-chevron {
+    display: none;
+  }
+  .how-to-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .how-to-or {
+    margin-left: 30px;
+  }
+}
+
+/* ===== ダッシュボードグリッド（録音/スペクトログラム/結果の3カラム） =====
+   900px 未満では1カラムに折り返す。DOM順(入力→スペクトログラム→結果)が
+   そのまま読む順序として自然なため、折り返し時の順序入れ替えはしない */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+@media (min-width: 900px) {
+  .dashboard-grid {
+    /* 中央(スペクトログラム)を主役として広く取る */
+    grid-template-columns: 0.95fr 2.15fr 1fr;
+    align-items: start;
+  }
+}
+
+.dashboard-column {
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboard-column .panel:last-child {
+  margin-bottom: 0;
+}
+
+/* ===== 音の特徴量カード ===== */
+.feature-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.feature-card {
+  flex: 1 1 90px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 8px;
+  background: var(--color-surface-soft);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  text-align: center;
+}
+
+.feature-card-label {
+  font-size: 0.68rem;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+
+.feature-card-value {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+/* ===== 入力方法（マイク録音・ファイル選択） ===== */
+.input-method-note {
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+  margin: 0 0 12px;
+}
+
+.button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* ===== ボタン（角丸。録音開始のみ塗り、それ以外は淡い塗り+枠） ===== */
+.action-button {
+  flex: 1 1 140px;
+  padding: 0;
+  margin: 0;
+  border: none;
+  border-radius: var(--radius-button);
+  background: transparent;
+  cursor: pointer;
+  transition: transform 0.1s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.action-button-face {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  /* スマホのタップ領域確保（Apple HIG の最小 44px を満たす） */
+  min-height: 48px;
+  /* 横方向の余白が無いと、幅が内容に合わせて縮む(flex:0 0 auto の)ボタンで
+     アイコン・文字が枠にぎりぎり詰まって見える(ファイル選択ボタン等) */
+  padding: 0 20px;
+  background: var(--color-surface-soft);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-button);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--color-text);
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.action-button .button-icon {
+  color: var(--color-accent);
+  transition: color 0.15s ease;
+}
+
+.action-button--primary .action-button-face {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: var(--color-on-accent);
+}
+
+.action-button--primary .button-icon {
+  color: var(--color-on-accent);
+}
+
+.action-button:hover:not(:disabled) .action-button-face {
+  background: var(--color-surface-hover);
+}
+
+.action-button--primary:hover:not(:disabled) .action-button-face {
+  background: var(--color-accent-soft);
+  border-color: var(--color-accent-soft);
+}
+
+/* 押している間だけ少し縮む（触感フィードバック） */
+.action-button:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.action-button:disabled {
+  cursor: not-allowed;
+}
+
+.action-button:disabled .action-button-face {
+  background: var(--color-border);
+  border-color: var(--color-border);
+  color: var(--color-muted);
+}
+
+.action-button:disabled .button-icon {
+  color: var(--color-muted);
+}
+
+/* ===== ファイル選択（隠しinput + カスタムボタン + 選択中ファイル名） ===== */
+.file-picker {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.file-picker .action-button {
+  flex: 0 0 auto;
+  display: inline-block;
+}
+
+/* 見た目上は消すが、キーボード操作やクリックの受け皿として機能は保つ */
+.file-picker-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  overflow: hidden;
+}
+
+.file-picker-filename {
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+}
+
+/* ===== ドラッグ&ドロップ領域(ブラウザ版向け) =====
+   ドラッグ&ドロップ操作自体はイベントハンドラの話なのでモバイルでも「動いて」しまうが、
+   スマホのタッチ操作ではファイルシステムからドラッグする手段が実質無く、見出しの案内文が
+   意味を持たない。480px以下では枠と案内文を消し、ボタンでの選択だけに絞る */
+.file-dropzone {
+  border: 2px dashed var(--color-border);
+  border-radius: 14px;
+  padding: 14px;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.file-dropzone--active {
+  border-color: var(--color-accent);
+  background: var(--color-surface-soft);
+}
+
+.file-dropzone-hint {
+  margin: 10px 0 0;
+  font-size: 0.78rem;
+  color: var(--color-muted);
+  text-align: center;
+}
+
+@media (max-width: 480px) {
+  .file-dropzone {
+    border: none;
+    padding: 0;
+  }
+  .file-dropzone-hint {
+    display: none;
+  }
+}
+
+/* ===== ステータス行 ===== */
+.status-message {
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+  margin: 0 0 16px;
+  min-height: 1.5em;
+}
+
+/* ===== ステータスピル ===== */
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  padding: 5px 14px;
+  font-size: 0.8rem;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-muted);
+  flex-shrink: 0;
+}
+
+.status-pill--active {
+  border-color: var(--color-success);
+  color: var(--color-success);
+}
+
+.status-pill--active .status-dot {
+  background: var(--color-success);
+  box-shadow: 0 0 6px rgba(76, 175, 80, 0.5);
+}
+
+:root[data-theme="dark"] .status-pill--active .status-dot {
+  box-shadow: 0 0 8px rgba(74, 222, 128, 0.6);
+}
+
+/* ===== スペクトログラム（周波数軸ラベル付き） ===== */
+.spectrogram-layout {
+  display: flex;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.spectrogram-axis-labels {
+  flex: 0 0 auto;
+  /* 幅ではなく、隣の canvas の実際の高さ(aspect-ratioで決まる)に揃える。
+     ここに個別の aspect-ratio を付けると自分の幅基準で高さが決まってしまい
+     canvas の高さとずれるため、flex の stretch に任せる */
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  font-size: 0.68rem;
+  color: var(--color-muted);
+  padding: 2px 0;
+  text-align: right;
+}
+
+#spectrogram-canvas {
+  display: block;
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  /* 高さを縦横比で固定する。height:auto だと内部解像度と表示高さが循環し、
+     レンダラーが読む clientHeight が不安定になる（Phase 3 の解像度設計と噛み合わせる）。
+     3カラムダッシュボード化で表示領域が広がったため、比率も横長(8:3)から
+     new-ui 案に近いやや縦長(16:9)へ変更し、実際に大きく見えるようにした */
+  aspect-ratio: 16 / 9;
+  height: auto;
+  background: #0d0206;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+}
+
+.spectrogram-time-caption {
+  font-size: 0.7rem;
+  color: var(--color-muted);
+  text-align: right;
+  margin: 4px 0 0;
+}
+
+/* ===== スペクトログラムカードの配色（参考画像 d/spctg.jpg に合わせた濃色テーマ） =====
+   このカードだけ独立して濃色にする。グローバルなCSS変数は変えず、
+   このカード配下の要素だけ個別に上書きすることで他のカードへ影響させない */
+.dashboard-column--spectrogram .panel-body {
+  /* 下(薄い)→上(濃い)のグラデーション。中間色を挟み、かつ明暗差を広げることで
+     カードの高さが低くなるスマホ幅でも変化がはっきり見えるようにしている */
+  background: linear-gradient(to top, #6b5636 0%, #4a3c29 35%, #362b1e 65%, #1c1712 100%);
+  border-color: #3d3122;
+  color: #e6dbc2;
+}
+
+.dashboard-column--spectrogram .section-title {
+  color: #f1e4c8;
+}
+
+.dashboard-column--spectrogram .status-pill {
+  border-color: rgba(241, 228, 200, 0.25);
+  color: #cbb994;
+}
+
+.dashboard-column--spectrogram .status-pill--active {
+  border-color: var(--color-success);
+  color: #8fd694;
+}
+
+.dashboard-column--spectrogram .spectrogram-axis-labels,
+.dashboard-column--spectrogram .spectrogram-time-caption {
+  color: #c9b78d;
+}
+
+.dashboard-column--spectrogram #spectrogram-canvas {
+  border-color: rgba(241, 228, 200, 0.15);
+}
+
+/* 夜モードでは同じ「下が薄い/上が濃い」構図をシアン寄りの配色で再現する */
+:root[data-theme="dark"] .dashboard-column--spectrogram .panel-body {
+  background: linear-gradient(to top, #1e3a52 0%, #152a3f 35%, #0e1c2c 65%, #060d16 100%);
+  border-color: #24405a;
+  color: #cfe8f5;
+}
+
+:root[data-theme="dark"] .dashboard-column--spectrogram .section-title {
+  color: #eafcff;
+}
+
+:root[data-theme="dark"] .dashboard-column--spectrogram .status-pill {
+  border-color: rgba(34, 211, 238, 0.25);
+  color: #8fd0e0;
+}
+
+:root[data-theme="dark"] .dashboard-column--spectrogram .status-pill--active {
+  color: #8fe0b0;
+}
+
+:root[data-theme="dark"] .dashboard-column--spectrogram .spectrogram-axis-labels,
+:root[data-theme="dark"] .dashboard-column--spectrogram .spectrogram-time-caption {
+  color: #7fb8cf;
+}
+
+:root[data-theme="dark"] .dashboard-column--spectrogram #spectrogram-canvas {
+  border-color: rgba(34, 211, 238, 0.15);
+}
+
+/* ===== 解析中インジケーター（マスコット + 進捗ドット） ===== */
+.analyzing-indicator {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 12px 16px;
+  background: var(--color-surface-soft);
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+}
+
+/* [hidden] は display:flex と同じ特異度のため、明示的に上書きしないと隠れない */
+.analyzing-indicator[hidden] {
+  display: none;
+}
+
+.analyzing-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  flex-shrink: 0;
+}
+
+.analyzing-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.analyzing-text {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+  line-height: 1.3;
+}
+
+.analyzing-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.analyzing-subtitle {
+  font-size: 0.72rem;
+  color: var(--color-text-secondary);
+}
+
+.analyzing-dots {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.analyzing-dots span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-accent-soft);
+  opacity: 0.3;
+  animation: analyzing-pulse 1.2s ease-in-out infinite;
+}
+
+.analyzing-dots span:nth-child(2) { animation-delay: 0.15s; }
+.analyzing-dots span:nth-child(3) { animation-delay: 0.3s; }
+.analyzing-dots span:nth-child(4) { animation-delay: 0.45s; }
+.analyzing-dots span:nth-child(5) { animation-delay: 0.6s; }
+
+@keyframes analyzing-pulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
+.analyzing-state-label {
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  color: var(--color-accent);
+  font-weight: 700;
+}
+
+@media (max-width: 480px) {
+  .analyzing-subtitle {
+    display: none;
+  }
+}
+
+/* ===== 感情の推定結果（右カラム: イラスト→ラベル→詳細/対応の縦積みカード） ===== */
+.emotion-panel-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 4px;
+}
+
+.emotion-panel-body .section-title {
+  align-self: flex-start;
+}
+
+.result-label {
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin: 4px 0;
+  color: var(--color-text);
+}
+
+/* 再生(=解析)が進行中であることを結果表示エリアそのものでも伝える点滅表示 */
+.result-label--analyzing,
+.result-reason--analyzing {
+  color: var(--color-accent);
+  animation: analyzing-pulse 1.2s ease-in-out infinite;
+}
+
+.result-reason {
+  margin: 0 0 8px;
+  color: var(--color-text-secondary);
+}
+
+.result-disclaimer {
+  font-size: 0.78rem;
+  color: var(--color-muted);
+  margin: 8px 0 0;
+}
+
+/* ===== 感情ごとのイラスト(透過PNG。感情が確定するまでは非表示) ===== */
+.emotion-illustration {
+  display: block;
+  width: 100%;
+  max-width: 200px;
+  height: auto;
+  margin: 14px auto 0;
+}
+
+/* [hidden] は display:block と同じ特異度のため、明示的に上書きしないと隠れない */
+.emotion-illustration[hidden] {
+  display: none;
+}
+
+/* ===== 気持ちの詳細 / おすすめの対応 ===== */
+.emotion-info-box {
+  width: 100%;
+  text-align: left;
+  background: var(--color-surface-soft);
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  padding: 10px 14px;
+  margin-top: 8px;
+}
+
+.emotion-info-box--advice {
+  background: #fff3e6;
+  border-color: var(--color-border-strong);
+}
+
+:root[data-theme="dark"] .emotion-info-box--advice {
+  background: #14283a;
+}
+
+.emotion-info-heading {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--color-accent);
+}
+
+.emotion-info-heading .icon {
+  width: 16px;
+  height: 16px;
+}
+
+.emotion-info-text {
+  font-size: 0.85rem;
+  color: var(--color-text);
+  margin: 4px 0 0;
+}
+
+/* ===== 使い方モーダル ===== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(45, 26, 18, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 100;
+}
+
+:root[data-theme="dark"] .modal-overlay {
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.modal-overlay[hidden] {
+  display: none;
+}
+
+.modal-panel {
+  position: relative;
+  width: 100%;
+  max-width: 560px;
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  padding: 24px;
+}
+
+.modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-surface-soft);
+  border: 1px solid var(--color-border);
+  border-radius: 50%;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.modal-close svg {
+  width: 16px;
+  height: 16px;
+}
+
+.modal-close:hover {
+  background: var(--color-surface-hover);
+}

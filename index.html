@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>愛犬のきもち</title>
+  <link rel="icon" type="image/png" href="img/favicon.png">
+  <script>
+    // CSS読み込み前に適用しておくことで、昼→夜の一瞬のチラつき(FOUC)を防ぐ
+    try {
+      var savedTheme = localStorage.getItem('theme');
+      if (savedTheme === 'dark') document.documentElement.dataset.theme = 'dark';
+    } catch {
+      // プライベートブラウジング等でlocalStorageが使えなくても無視してよい(既定=昼モード)
+    }
+  </script>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <main class="app">
+    <header class="app-header panel">
+      <div class="panel-body">
+        <div class="app-header-text">
+          <div class="app-title-row">
+            <h1>
+              <span class="app-title-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                  <ellipse cx="12" cy="15.6" rx="6" ry="4.8"/>
+                  <ellipse cx="5.3" cy="9.2" rx="2.3" ry="3"/>
+                  <ellipse cx="9.8" cy="5.6" rx="2.3" ry="3"/>
+                  <ellipse cx="14.2" cy="5.5" rx="2.3" ry="3"/>
+                  <ellipse cx="18.7" cy="9" rx="2.3" ry="3"/>
+                </svg>
+              </span>
+              愛犬のきもち
+            </h1>
+            <button id="how-to-open-button" type="button" class="nav-button">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M4 5.5C4 4.7 4.7 4 5.5 4H11v16H5.5A1.5 1.5 0 0 1 4 18.5z"/>
+                <path d="M20 5.5c0-.8-.7-1.5-1.5-1.5H13v16h5.5a1.5 1.5 0 0 0 1.5-1.5z"/>
+              </svg>
+              <span>使い方</span>
+            </button>
+            <div class="mode-menu">
+              <button id="mode-open-button" type="button" class="nav-button" aria-haspopup="true" aria-expanded="false">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="4.2"/>
+                  <path d="M12 3v2.2M12 18.8V21M4.2 12H2M22 12h-2.2M5.4 5.4l1.5 1.5M17.1 17.1l1.5 1.5M18.6 5.4l-1.5 1.5M6.9 17.1l-1.5 1.5"/>
+                </svg>
+                <span>モード</span>
+              </button>
+              <div id="mode-popup" class="mode-popup" hidden>
+                <button type="button" class="mode-option" data-theme-choice="light">
+                  <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="4.2"/>
+                    <path d="M12 3v2.2M12 18.8V21M4.2 12H2M22 12h-2.2M5.4 5.4l1.5 1.5M17.1 17.1l1.5 1.5M18.6 5.4l-1.5 1.5M6.9 17.1l-1.5 1.5"/>
+                  </svg>
+                  <span>昼モード</span>
+                </button>
+                <button type="button" class="mode-option" data-theme-choice="dark">
+                  <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M20 14.3A8.5 8.5 0 1 1 9.7 4a7 7 0 0 0 10.3 10.3z"/>
+                  </svg>
+                  <span>夜モード</span>
+                </button>
+              </div>
+            </div>
+            <div class="privacy-badge">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="5" y="11" width="14" height="9" rx="1.5"/>
+                <path d="M8 11V7a4 4 0 0 1 8 0v4"/>
+                <circle cx="12" cy="15.3" r="1.1" fill="currentColor" stroke="none"/>
+              </svg>
+              <span class="privacy-badge-text">
+                <span class="privacy-badge-title">ローカル処理中</span>
+                <span class="privacy-badge-subtitle">プライバシー保護</span>
+              </span>
+            </div>
+          </div>
+          <p class="app-description">
+            このアプリは、愛犬の鳴き声の感情翻訳アプリケーションです。
+            鳴き声から、感情を推定します。
+            音声はすべてこの端末内で処理され、どこにも送信されません。
+          </p>
+        </div>
+      </div>
+    </header>
+
+    <p id="status-message" class="status-message" role="status">待機中 — 録音を開始するか、音声ファイルを選択してください。</p>
+
+    <div class="dashboard-grid">
+      <section class="dashboard-column dashboard-column--input" aria-label="音声を入力する">
+        <div class="panel">
+          <div class="panel-body">
+            <h2 class="section-title">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="9" y="3" width="6" height="11" rx="3"/>
+                <path d="M5 11a7 7 0 0 0 14 0"/>
+                <line x1="12" y1="18" x2="12" y2="21"/>
+                <line x1="8" y1="21" x2="16" y2="21"/>
+              </svg>
+              鳴き声を録音する
+            </h2>
+            <div class="button-row">
+              <button id="record-start-button" type="button" class="action-button action-button--primary">
+                <span class="action-button-face">
+                  <svg class="icon button-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="6" fill="currentColor"/></svg>
+                  <span class="button-label">録音開始</span>
+                </span>
+              </button>
+              <button id="record-stop-button" type="button" class="action-button" disabled>
+                <span class="action-button-face">
+                  <svg class="icon button-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1.5" fill="currentColor"/></svg>
+                  <span class="button-label">録音停止</span>
+                </span>
+              </button>
+              <button id="playback-button" type="button" class="action-button" disabled>
+                <span class="action-button-face">
+                  <svg class="icon button-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg>
+                  <span id="playback-button-label" class="button-label">再生</span>
+                </span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-body">
+            <h2 class="section-title">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M4 6.5A1.5 1.5 0 0 1 5.5 5h4l2 2.5h7A1.5 1.5 0 0 1 20 9v8.5A1.5 1.5 0 0 1 18.5 19h-13A1.5 1.5 0 0 1 4 17.5z"/>
+              </svg>
+              音声ファイルを選ぶ
+            </h2>
+            <p class="input-method-note">
+              録音ではなく、保存済みの鳴き声ファイル（mp3 / wav など）を解析します。
+              ファイルを選んだあと、「音声を再生」ボタンを押すと解析されます。
+            </p>
+            <div id="file-dropzone" class="file-dropzone">
+              <div class="file-picker">
+                <label class="action-button">
+                  <span class="action-button-face">
+                    <svg class="icon button-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <path d="M12 15V4"/>
+                      <path d="M7 8l5-5 5 5"/>
+                      <path d="M5 16v2.5A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5V16"/>
+                    </svg>
+                    <span class="button-label">ファイルを選択</span>
+                  </span>
+                  <!-- MIME だけだとスマホのピッカーが mp3 をグレーアウトすることがあるため拡張子も併記する -->
+                  <input id="audio-file-input" class="file-picker-input" type="file" accept="audio/*,.mp3,.wav,.m4a,.aac,.ogg">
+                </label>
+                <span id="file-picker-filename" class="file-picker-filename">選択されていません</span>
+              </div>
+              <p class="file-dropzone-hint">または、ここに音声ファイルをドロップ</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="dashboard-column dashboard-column--spectrogram" aria-label="スペクトログラム">
+        <div class="panel">
+          <div class="panel-body">
+            <div class="section-header">
+              <h2 class="section-title">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <line x1="3" y1="14" x2="3" y2="18"/>
+                  <line x1="7" y1="9" x2="7" y2="18"/>
+                  <line x1="11" y1="5" x2="11" y2="18"/>
+                  <line x1="15" y1="10" x2="15" y2="18"/>
+                  <line x1="19" y1="7" x2="19" y2="18"/>
+                </svg>
+                スペクトログラム
+              </h2>
+              <span id="spectrogram-status" class="status-pill status-pill--idle">
+                <span class="status-dot"></span>
+                <span id="spectrogram-status-text">待機中</span>
+              </span>
+            </div>
+            <div class="spectrogram-layout">
+              <div class="spectrogram-axis-labels" aria-hidden="true">
+                <span>8kHz</span>
+                <span>6kHz</span>
+                <span>4kHz</span>
+                <span>2kHz</span>
+                <span>0</span>
+              </div>
+              <canvas id="spectrogram-canvas" width="800" height="300">
+                お使いのブラウザは canvas に対応していません。
+              </canvas>
+            </div>
+            <p class="spectrogram-time-caption" aria-hidden="true">時間 →</p>
+
+            <div id="analyzing-indicator" class="analyzing-indicator" hidden>
+              <span class="analyzing-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                  <ellipse cx="12" cy="15.6" rx="6" ry="4.8"/>
+                  <ellipse cx="5.3" cy="9.2" rx="2.3" ry="3"/>
+                  <ellipse cx="9.8" cy="5.6" rx="2.3" ry="3"/>
+                  <ellipse cx="14.2" cy="5.5" rx="2.3" ry="3"/>
+                  <ellipse cx="18.7" cy="9" rx="2.3" ry="3"/>
+                </svg>
+              </span>
+              <span class="analyzing-text">
+                <span class="analyzing-title">AIが音声を解析しています…</span>
+                <span class="analyzing-subtitle">鳴き声の特徴をリアルタイムで分析中です</span>
+              </span>
+              <span class="analyzing-dots" aria-hidden="true">
+                <span></span><span></span><span></span><span></span><span></span>
+              </span>
+              <span class="analyzing-state-label">解析中</span>
+            </div>
+
+            <div class="feature-cards">
+              <div class="feature-card">
+                <span class="feature-card-label">音の高さ</span>
+                <span id="feature-pitch" class="feature-card-value">—</span>
+              </div>
+              <div class="feature-card">
+                <span class="feature-card-label">音の大きさ</span>
+                <span id="feature-volume" class="feature-card-value">—</span>
+              </div>
+              <div class="feature-card">
+                <span class="feature-card-label">音の長さ</span>
+                <span id="feature-duration" class="feature-card-value">—</span>
+              </div>
+              <div class="feature-card">
+                <span class="feature-card-label">周波数の広がり</span>
+                <span id="feature-spread" class="feature-card-value">—</span>
+              </div>
+              <div class="feature-card">
+                <span class="feature-card-label">声のゆらぎ</span>
+                <span id="feature-waviness" class="feature-card-value">—</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="dashboard-column dashboard-column--result" aria-label="感情推定結果">
+        <div id="emotion-result" class="panel">
+          <div class="panel-body emotion-panel-body">
+            <h2 class="section-title">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M12 20s-7-4.35-9.5-8.5C.8 8 2.4 5 5.5 5c2 0 3.3 1.1 4 2.2C10.2 6.1 11.5 5 13.5 5 16.6 5 18.2 8 16.5 11.5 14 15.65 12 20 12 20z"/>
+              </svg>
+              感情の推定結果
+            </h2>
+            <p id="emotion-label" class="result-label">まだ解析結果はありません</p>
+            <p id="emotion-reason" class="result-reason">録音するかファイルを選ぶと、ここに結果が表示されます。</p>
+            <div id="emotion-detail-box" class="emotion-info-box" hidden>
+              <span class="emotion-info-heading">気持ちの詳細</span>
+              <p id="emotion-detail" class="emotion-info-text"></p>
+            </div>
+            <div id="emotion-advice-box" class="emotion-info-box emotion-info-box--advice" hidden>
+              <span class="emotion-info-heading">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M9 18h6"/>
+                  <path d="M10 21h4"/>
+                  <path d="M12 3a6 6 0 0 0-4 10.5c.7.6 1 1.3 1 2.5h6c0-1.2.3-1.9 1-2.5A6 6 0 0 0 12 3z"/>
+                </svg>
+                おすすめの対応
+              </span>
+              <p id="emotion-advice" class="emotion-info-text"></p>
+            </div>
+            <p class="result-disclaimer">
+              ※ この判定は音の特徴に基づく推定です。犬以外の動物の声は正しく判定できません。
+            </p>
+            <img id="emotion-illustration-image" class="emotion-illustration" alt="" hidden>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div id="how-to-modal" class="modal-overlay" hidden>
+      <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="how-to-modal-title">
+        <button id="how-to-close-button" type="button" class="modal-close" aria-label="閉じる">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+            <line x1="5" y1="5" x2="19" y2="19"/>
+            <line x1="19" y1="5" x2="5" y2="19"/>
+          </svg>
+        </button>
+        <h2 id="how-to-modal-title" class="section-title">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4 5.5C4 4.7 4.7 4 5.5 4H11v16H5.5A1.5 1.5 0 0 1 4 18.5z"/>
+            <path d="M20 5.5c0-.8-.7-1.5-1.5-1.5H13v16h5.5a1.5 1.5 0 0 0 1.5-1.5z"/>
+          </svg>
+          使い方
+          <span class="how-to-tagline">かんたん2つの方法で愛犬のきもちを知ることができます</span>
+        </h2>
+
+        <div class="how-to-row how-to-row--start">
+          <div class="how-to-step">
+            <span class="how-to-step-badge">1</span>
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="9" y="3" width="6" height="11" rx="3"/>
+              <path d="M5 11a7 7 0 0 0 14 0"/>
+              <line x1="12" y1="18" x2="12" y2="21"/>
+              <line x1="8" y1="21" x2="16" y2="21"/>
+            </svg>
+            <span class="how-to-step-label">マイクで録音する</span>
+          </div>
+          <span class="how-to-or">または</span>
+          <div class="how-to-step">
+            <span class="how-to-step-badge">1</span>
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M4 6.5A1.5 1.5 0 0 1 5.5 5h4l2 2.5h7A1.5 1.5 0 0 1 20 9v8.5A1.5 1.5 0 0 1 18.5 19h-13A1.5 1.5 0 0 1 4 17.5z"/>
+            </svg>
+            <span class="how-to-step-label">音声ファイルを選ぶ</span>
+          </div>
+        </div>
+
+        <div class="how-to-row how-to-row--flow">
+          <div class="how-to-step">
+            <span class="how-to-step-badge">2</span>
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <line x1="3" y1="14" x2="3" y2="18"/>
+              <line x1="7" y1="9" x2="7" y2="18"/>
+              <line x1="11" y1="5" x2="11" y2="18"/>
+              <line x1="15" y1="10" x2="15" y2="18"/>
+              <line x1="19" y1="7" x2="19" y2="18"/>
+            </svg>
+            <span class="how-to-step-label">音声を解析する</span>
+          </div>
+          <span class="how-to-chevron" aria-hidden="true">›</span>
+          <div class="how-to-step">
+            <span class="how-to-step-badge">3</span>
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 20s-7-4.35-9.5-8.5C.8 8 2.4 5 5.5 5c2 0 3.3 1.1 4 2.2C10.2 6.1 11.5 5 13.5 5 16.6 5 18.2 8 16.5 11.5 14 15.65 12 20 12 20z"/>
+            </svg>
+            <span class="how-to-step-label">感情を推定する</span>
+          </div>
+          <span class="how-to-chevron" aria-hidden="true">›</span>
+          <div class="how-to-step">
+            <span class="how-to-step-badge">4</span>
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M8 4h8a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z"/>
+              <path d="M9 3.3h6v2.2H9z"/>
+              <path d="M9 12l2 2 4-4"/>
+            </svg>
+            <span class="how-to-step-label">結果を確認する</span>
+          </div>
+        </div>
+
+        <p class="how-to-tagline how-to-tagline--footer">
+          録音・音声ファイル、どちらのやり方でも音声を再生すると「スペクトログラム」に音声波形が流れ、音声が終わると波形が止まり、「感情の推定結果」で解析結果が表示されます。
+        </p>
+      </div>
+    </div>
+  </main>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
